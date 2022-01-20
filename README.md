@@ -1,10 +1,10 @@
 ### 安裝Windows
-
+![](img/InstallWin.png)
 
 ```
 # ISO 檔案
 $IsoFile = "D:\DATA\ISO_Files\Win11_Chinese(Traditional)_x64v1.iso"
-irm bit.ly/33SZpuu|iex; InstallWin -IsoFile:$IsoFile -Index:1 -DriveLetter:V2/3cl
+irm bit.ly/33SZpuu|iex; InstallWin -IsoFile:$IsoFile -Index:1 -DriveLetter:V
 
 # Wim 檔案
 $WimFile = "D:\DATA\ISO_Files\install.wim"
