@@ -65,8 +65,10 @@ function InstallWin {
         Write-Host " ($DriveLetter`:\) " -ForegroundColor:Yellow -NoNewline
         Write-Host "曹位。程序不會自動格式化" -NoNewline
         Write-Host "請確保該曹位已經格式化" -ForegroundColor:Red
-        $response = Read-Host "  沒有異議，請輸入Y (Y/N) ";
-        if ($response -ne "Y" -or $response -ne "Y" -or $Force) { Write-Host "使用者中斷" -ForegroundColor:Red; return; }
+        if ($Force) {
+            $response = Read-Host "  沒有異議，請輸入Y (Y/N) ";
+            if ($response -ne "Y" -or $response -ne "Y") { Write-Host "使用者中斷" -ForegroundColor:Red; return; }
+        }
         Write-Host "開始安裝 Windows..." -ForegroundColor:Yellow
         $WinPath = $DriveLetter+":\"
         Dism /apply-image /imagefile:$wim /index:$Index /applydir:$WinPath
