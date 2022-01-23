@@ -42,3 +42,10 @@ irm bit.ly/33SZpuu|iex; Get-WIM_INFO -WimFile:$WimFile -Index:1
 # 從D曹壓縮64G，並新增E曹
 irm bit.ly/33SZpuu|iex; CompressPartition -src:D -dst:E -Size:64GB
 ```
+
+
+## 備份系統檔案
+```
+# 備份 W 曹的系統到 Z:\install.wim
+irm bit.ly/33SZpuu|iex; CaptureWim -Dri:W -Image:"Z:\install.wim" -Compress
+```
