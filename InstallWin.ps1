@@ -1,6 +1,6 @@
-# è¼‰å…¥å¤–éƒ¨å‡½å¼
+# ¸ü¤J¥~³¡¨ç¦¡
 irm "https://raw.githubusercontent.com/hunandy14/autoFixEFI/master/autoFixEFI.ps1"|iex
-# ç²å–Wimè³‡è¨Š
+# Àò¨úWim¸ê°T
 function Get-WIM_INFO {
     param (
         [Parameter(Position = 0, ParameterSetName = "IsoFile", Mandatory=$true)]
@@ -25,7 +25,7 @@ function Get-WIM_INFO {
     
     if ($IsoFile) { $Mount = Dismount-DiskImage -InputObject:$Mount }
 }
-# å®‰è£Windows
+# ¦w¸ËWindows
 function InstallWin {
     param (
         [Parameter(Position = 0, ParameterSetName = "IsoFile", Mandatory=$true)]
@@ -40,36 +40,36 @@ function InstallWin {
         [switch]$Force
     )
     
-    # è¼‰å…¥ç£ç¢Ÿä»£è™Ÿ
+    # ¸ü¤JºÏºĞ¥N¸¹
     $Dri = Get-Partition -DriveLetter:$DriveLetter
-    if ($Dri){ #ç£ç¢Ÿæ˜¯å¦å­˜åœ¨
-        if (($Dri|Get-Disk).PartitionStyle -ne "GPT") { # é©—è­‰GPTæ ¼å¼
+    if ($Dri){ #ºÏºĞ¬O§_¦s¦b
+        if (($Dri|Get-Disk).PartitionStyle -ne "GPT") { # ÅçÃÒGPT®æ¦¡
             $Dri|Get-Disk
-            Write-Host "è©²æ›¹ä½çš„ç¡¬ç¢Ÿä¸æ˜¯GPTæ ¼å¼ï¼Œè«‹å…ˆå°‡è©²ç£ç¢Ÿè½‰æ›æˆGPTæ ¼å¼"
+            Write-Host "¸Ó±ä¦ìªºµwºĞ¤£¬OGPT®æ¦¡¡A½Ğ¥ı±N¸ÓºÏºĞÂà´«¦¨GPT®æ¦¡"
             return
         }
-    } else { Write-Host "DriveLetter çš„æ›¹ä½ä¸å­˜åœ¨"; return }
+    } else { Write-Host "DriveLetter ªº±ä¦ì¤£¦s¦b"; return }
     
-    # æ›è¼‰æ˜ åƒæª”
+    # ±¾¸ü¬M¹³ÀÉ
     if ($IsoFile) {
         $Mount = Mount-DiskImage $IsoFile
-        if (!$Mount) { Write-Host "ç„¡æ³•è¼‰å…¥æ˜ åƒæª”ï¼Œæª¢æŸ¥æ˜ åƒæª”ä½ç½®æ˜¯å¦æ­£ç¢º"; return}
+        if (!$Mount) { Write-Host "µLªk¸ü¤J¬M¹³ÀÉ¡AÀË¬d¬M¹³ÀÉ¦ì¸m¬O§_¥¿½T"; return}
         $wim = (($Mount)|Get-Volume).DriveLetter+":\sources\install.wim";
     } elseif ($WimFile) {
         $wim = $WimFile
     }
     
-    # å®‰è£åˆ°æŒ‡å®šæ›¹ä½
+    # ¦w¸Ë¨ì«ü©w±ä¦ì
     if ($Dri) {
-        Write-Host "å³å°‡é–‹å§‹å®‰è£Windowsåˆ°" -NoNewline
+        Write-Host "§Y±N¶}©l¦w¸ËWindows¨ì" -NoNewline
         Write-Host " ($DriveLetter`:\) " -ForegroundColor:Yellow -NoNewline
-        Write-Host "æ›¹ä½ã€‚ç¨‹åºä¸æœƒè‡ªå‹•æ ¼å¼åŒ–" -NoNewline
-        Write-Host "è«‹ç¢ºä¿è©²æ›¹ä½å·²ç¶“æ ¼å¼åŒ–" -ForegroundColor:Red
-        if ($Force) {
-            $response = Read-Host "  æ²’æœ‰ç•°è­°ï¼Œè«‹è¼¸å…¥Y (Y/N) ";
-            if ($response -ne "Y" -or $response -ne "Y") { Write-Host "ä½¿ç”¨è€…ä¸­æ–·" -ForegroundColor:Red; return; }
+        Write-Host "±ä¦ì¡Cµ{§Ç¤£·|¦Û°Ê®æ¦¡¤Æ" -NoNewline
+        Write-Host "½Ğ½T«O¸Ó±ä¦ì¤w¸g®æ¦¡¤Æ" -ForegroundColor:Red
+        if (!$Force) {
+            $response = Read-Host "  ¨S¦³²§Ä³¡A½Ğ¿é¤JY (Y/N) ";
+            if ($response -ne "Y" -or $response -ne "Y") { Write-Host "¨Ï¥ÎªÌ¤¤Â_" -ForegroundColor:Red; return; }
         }
-        Write-Host "é–‹å§‹å®‰è£ Windows..." -ForegroundColor:Yellow
+        Write-Host "¶}©l¦w¸Ë Windows..." -ForegroundColor:Yellow
         $WinPath = $DriveLetter+":\"
         Dism /apply-image /imagefile:$wim /index:$Index /applydir:$WinPath
     }
@@ -77,21 +77,83 @@ function InstallWin {
         $Mount = Dismount-DiskImage -InputObject:$Mount
     }
     
-    # ä¿®å¾©å¼•å°
+    # ­×´_¤Ş¾É
     if ($FixEFI) {
         autoFixEFI -DriveLetter:V -Force:$Force
     }
 }
-# æ¸¬è©¦
+function CompressPartition {
+    param (
+        [Parameter(Position = 0, ParameterSetName = "", Mandatory=$true)]
+        [string]$srcDriveLetter,
+        [Parameter(Position = 1, ParameterSetName = "", Mandatory=$true)]
+        [string]$dstDriveLetter,
+        [Parameter(Position = 2, ParameterSetName = "")]
+        [Int64]$Size,
+        [switch] $Force
+    )
+    # ¸ü¤JºÏºĞ¥N¸¹
+    $Dri = Get-Partition -DriveLetter:$srcDriveLetter
+    
+    if (!$Dri){ Write-Host "DriveLetter ªº±ä¦ì¤£¦s¦b"; return }
+    if (!$Size) {
+        $Size = 64GB; Write-Host "¹w³]Size¬° $($Size/1GB) GB"
+    } 
+    # ­pºâÀ£ÁYªÅ¶¡
+    $DriSize = $Dri|Get-PartitionSupportedSize
+    $CmpSize = $DriSize.SizeMax - $DriSize.SizeMin
+    if ($Size -gt $CmpSize) { 
+        Write-Host "[ªÅ¶¡¤£¨¬]::" -ForegroundColor:Red -NoNewline
+        Write-Host "ºÏºĞ $srcDriveLetter ¥u³Ñ $([convert]::ToInt64($CmpSize/1GB))GB¡C" -NoNewline
+        Write-Host "µLªkÀ£ÁY¥X $($Size/1GB)GB"
+        return
+    }
+    # À£ÁY
+    Write-Host "  §Y±N±q $srcDriveLetter ±äÀ£ÁY $($Size/1GB)GB¡A¨Ã«Ø¥ß $dstDriveLetter ±ä" -ForegroundColor:Yellow
+    if (!$Force) {
+        $response = Read-Host "  ¨S¦³²§Ä³¡A½Ğ¿é¤JY (Y/N) ";
+        if ($response -ne "Y" -or $response -ne "Y") { Write-Host "¨Ï¥ÎªÌ¤¤Â_" -ForegroundColor:Red; return; }
+    }
+    # À£ÁYºÏ°Ï
+    $Size = $Size + 8MB
+    $Dri|Resize-Partition -Size:($Dri.size-$Size); 
+    ((($Dri|New-Partition -Size:$Size )|Format-Volume)|Get-Partition)|Set-Partition -NewDriveLetter:$dstDriveLetter
+}
+
+function MergePartition {
+    param (
+        [Parameter(Position = 0, ParameterSetName = "", Mandatory=$true)]
+        [string]$DriveLetter,
+        [switch]$Force
+    )
+    # ¸ü¤JºÏºĞ¥N¸¹
+    $Dri = Get-Partition -DriveLetter:$DriveLetter
+    if (!$Dri){ Write-Host "DriveLetter ªº±ä¦ì¤£¦s¦b"; return }
+    # ¦X¨Ö¨ìº¡
+    $Size = ($Dri|Get-PartitionSupportedSize).SizeMax
+    if ($Size-$Dri.Size -eq 0) { Write-Host "ºÏºĞ $DriveLetter «á¤è¨S¦³¦h¾lªºªÅ¶¡¥i¥H¦X¨Ö"; return }
+    Write-Host "ºÏºĞ $DriveLetter «áÁÙ¦³ $(($Size-$Dri.Size)/1MB)MB ªºªÅ¶¡¡A§Y±N¦X¨Ö³o¨ÇªÅ¶¡"
+    if (!$Force) {
+        $response = Read-Host "  ¨S¦³²§Ä³¡A½Ğ¿é¤JY (Y/N) ";
+        if ($response -ne "Y" -or $response -ne "Y") { Write-Host "¨Ï¥ÎªÌ¤¤Â_" -ForegroundColor:Red; return; }
+    }
+    $Dri|Resize-Partition -Size:$Size
+}
+# ´ú¸Õ
 function Test-InstallWin {
     $IsoFile = "D:\DATA\ISO_Files\Win11_Chinese(Traditional)_x64v1.iso"
     $WimFile = "D:\DATA\ISO_Files\install.wim"
-    # æŸ¥çœ‹ISOè³‡è¨Š
+    # ¬d¬İISO¸ê°T
     # Get-WIM_INFO -IsoFile:$IsoFile
     # Get-WIM_INFO -WimFile:$WimFile
-    #  å®‰è£Windows
+    #  ¦w¸ËWindows
     # InstallWin -IsoFile:$IsoFile -Index:1 -DriveLetter:V2/3cl
-    InstallWin -WimFile:$WimFile -Index:1 -DriveLetter:V;
-    # ä¿®å¾©å¼•å°(ä¸å°å¿ƒæ‰“éŒ¯ä¸­æ–·äº†çš„è©±)
+    # InstallWin -WimFile:$WimFile -Index:1 -DriveLetter:V;
+    # ­×´_¤Ş¾É(¤£¤p¤ß¥´¿ù¤¤Â_¤Fªº¸Ü)
     # autoFixEFI -DriveLetter:V
-} # Test-InstallWin
+    
+    CompressPartition -srcDriveLetter:D -dstDriveLetter:E -Size:64GB
+    
+    # MergePartition -DriveLetter:D -Force
+} 
+Test-InstallWin
