@@ -26,17 +26,17 @@ function Get-WIM_INFO {
 # 安裝Windows
 function InstallWin {
     param (
-        [Parameter(Position = 0, ParameterSetName = "IsoFile", Mandatory=$true)]
-        [string]$IsoFile,
-        [Parameter(Position = 0, ParameterSetName = "WimFile", Mandatory=$true)]
-        [string]$WimFile, 
-        [Parameter(Position = 1, ParameterSetName = "", Mandatory=$true)]
-        [string]$Index,
-        [Parameter(Position = 2, ParameterSetName = "", Mandatory=$true)]
+        [Parameter(Position = 0, ParameterSetName = "", Mandatory=$true)]
         [string]$DriveLetter,
+        [Parameter(Position = 1, ParameterSetName = "IsoFile", Mandatory=$true)]
+        [string]$IsoFile,
+        [Parameter(Position = 1, ParameterSetName = "WimFile", Mandatory=$true)]
+        [string]$WimFile, 
+        [Parameter(Position = 2, ParameterSetName = "")]
+        [string]$Index,
         [switch]$Force
     )
-    
+    if (!$Index) { $Index="1" }
     # 載入磁碟代號
     $Dri = Get-Partition -DriveLetter:$DriveLetter
     if (!$Dri){ Write-Host "DriveLetter 的曹位不存在"; return }
