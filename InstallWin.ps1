@@ -1,6 +1,3 @@
-# 載入外部函式
-irm "https://raw.githubusercontent.com/hunandy14/autoFixEFI/master/autoFixEFI.ps1"|iex
-irm "https://raw.githubusercontent.com/hunandy14/autoFixEFI/master/autoFixMBR.ps1"|iex
 # 獲取Wim資訊
 function Get-WIM_INFO {
     param (
@@ -37,7 +34,6 @@ function InstallWin {
         [string]$Index,
         [Parameter(Position = 2, ParameterSetName = "", Mandatory=$true)]
         [string]$DriveLetter,
-        [switch]$FixBoot,
         [switch]$Force
     )
     
@@ -73,14 +69,8 @@ function InstallWin {
     }
     
     # 修復引導
-    if ($FixBoot) {
-        $Boot = ($Dri|Get-Disk).PartitionStyle
-        if ($Boot -ne "GPT") {
-            autoFixEFI -DriveLetter:V -Force:$Force
-        } elseif ($Boot -ne "MBR") { 
-            autoFixMBR -DriveLetter:V -Force:$Force
-        }
-    }
+    irm "https://raw.githubusercontent.com/hunandy14/autoFixEFI/master/autoFixBoot.ps1" | iex
+    autoFixBoot -DriveLetter:$DriveLetter -Force:$Force
 }
 # 壓縮磁碟
 function CompressPartition {
