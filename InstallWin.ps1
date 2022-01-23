@@ -82,6 +82,7 @@ function InstallWin {
         autoFixEFI -DriveLetter:V -Force:$Force
     }
 }
+# 壓縮磁碟
 function CompressPartition {
     param (
         [Parameter(Position = 0, ParameterSetName = "", Mandatory=$true)]
@@ -95,16 +96,16 @@ function CompressPartition {
     # 載入磁碟代號
     $Dri = Get-Partition -DriveLetter:$srcDriveLetter
     if (!$Dri){ Write-Host "srcDriveLetter 的曹位不存在"; return }
-    $Dri = Get-Partition -DriveLetter:$dstDriveLetter
-    if ($Dri){ Write-Host "dstDriveLetter 的曹位 $dstDriveLetter 已存在，請選擇其他曹位"; return }
+    try { Get-Partition -DriveLetter:$dstDriveLetter -Erroraction }
+    catch { Write-Host "dstDriveLetter 的曹位 $dstDriveLetter 已存在，請選擇其他曹位"; return }
     if (!$Size) { $Size = 64GB; Write-Host "預設Size為 $($Size/1GB) GB" } 
     # 計算壓縮空間
     $DriSize = $Dri|Get-PartitionSupportedSize
     $CmpSize = $DriSize.SizeMax - $DriSize.SizeMin
     if ($Size -gt $CmpSize) { 
         Write-Host "[空間不足]::" -ForegroundColor:Red -NoNewline
-        Write-Host "磁碟 $srcDriveLetter 只剩 $([convert]::ToInt64($CmpSize/1GB))GB。" -NoNewline
-        Write-Host "無法壓縮出 $($Size/1GB)GB"
+        Write-Host "磁碟 $srcDriveLetter 只剩 $([convert]::ToInt64($CmpSize/1MB))MB。" -NoNewline
+        Write-Host "無法壓縮出 $($Size/1MB)MB"
         return
     }
     # 壓縮
@@ -118,6 +119,7 @@ function CompressPartition {
     $Dri|Resize-Partition -Size:($Dri.size-$Size); 
     ((($Dri|New-Partition -Size:$Size )|Format-Volume)|Get-Partition)|Set-Partition -NewDriveLetter:$dstDriveLetter
 }
+# 合併磁碟
 function MergePartition {
     param (
         [Parameter(Position = 0, ParameterSetName = "", Mandatory=$true)]
