@@ -70,7 +70,7 @@ function InstallWin {
     
     # 修復引導
     irm "https://raw.githubusercontent.com/hunandy14/autoFixEFI/master/autoFixBoot.ps1" | iex
-    autoFixBoot -DriveLetter:$DriveLetter -Force:$Force
+    autoFixBoot -DriveLetter:$DriveLetter -Force
 }
 # 壓縮磁碟
 function CompressPartition {
