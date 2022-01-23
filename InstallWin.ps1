@@ -94,11 +94,10 @@ function CompressPartition {
     )
     # 載入磁碟代號
     $Dri = Get-Partition -DriveLetter:$srcDriveLetter
-    
-    if (!$Dri){ Write-Host "DriveLetter 的曹位不存在"; return }
-    if (!$Size) {
-        $Size = 64GB; Write-Host "預設Size為 $($Size/1GB) GB"
-    } 
+    if (!$Dri){ Write-Host "srcDriveLetter 的曹位不存在"; return }
+    $Dri = Get-Partition -DriveLetter:$dstDriveLetter
+    if ($Dri){ Write-Host "dstDriveLetter 的曹位 $dstDriveLetter 已存在，請選擇其他曹位"; return }
+    if (!$Size) { $Size = 64GB; Write-Host "預設Size為 $($Size/1GB) GB" } 
     # 計算壓縮空間
     $DriSize = $Dri|Get-PartitionSupportedSize
     $CmpSize = $DriSize.SizeMax - $DriSize.SizeMin
@@ -119,7 +118,6 @@ function CompressPartition {
     $Dri|Resize-Partition -Size:($Dri.size-$Size); 
     ((($Dri|New-Partition -Size:$Size )|Format-Volume)|Get-Partition)|Set-Partition -NewDriveLetter:$dstDriveLetter
 }
-
 function MergePartition {
     param (
         [Parameter(Position = 0, ParameterSetName = "", Mandatory=$true)]
