@@ -134,8 +134,30 @@ function MergePartition {
     }
     $Dri|Resize-Partition -Size:$Size
 }
+# 備份系統
+function CaptureWim {
+    param (
+        [Parameter(Position = 0, ParameterSetName = "", Mandatory=$true)]
+        [string] $DriveLetter,
+        [Parameter(Position = 1, ParameterSetName = "", Mandatory=$true)]
+        [string] $ImageFile,
+        [Parameter(Position = 2, ParameterSetName = "")]
+        [string] $Name,
+        [switch] $Compress
+        
+    )
+    $CaptureDir= "$DriveLetter`:\"
+    $WimScript = "$env:TEMP\WimScript.ini"
+    if (!$Name) { $Name = "SystemBackup" }
+    
+    irm bit.ly/34yREdN|iex; WimIgnore $DriveLetter -Out:$WimScript
+    $cmd = "Dism /Capture-Image /ImageFile:$ImageFile /CaptureDir:$CaptureDir /Name:$Name /ConfigFile:$WimScript"
+    if ($Compress) { $cmd = "$cmd /Compress:max" }
+    Invoke-Expression $cmd
+}
+
 # 測試
-function Test-InstallWin {
+# function Test-InstallWin {
     # $IsoFile = "D:\DATA\ISO_Files\Win11_Chinese(Traditional)_x64v1.iso"
     # $WimFile = "D:\DATA\ISO_Files\install.wim"
     # 查看ISO資訊
@@ -150,4 +172,6 @@ function Test-InstallWin {
     # CompressPartition -srcDriveLetter:D -dstDriveLetter:E -Size:64GB
     
     # MergePartition -DriveLetter:D -Force
-} # Test-InstallWin
+    
+    # CaptureWim -Dri:W -Image:"Z:\install.wim" -Compress
+# } # Test-InstallWin
