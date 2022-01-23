@@ -95,9 +95,15 @@ function CompressPartition {
     )
     # 載入磁碟代號
     $Dri = Get-Partition -DriveLetter:$srcDriveLetter
-    if (!$Dri){ Write-Host "srcDriveLetter 的曹位不存在"; return }
+    if (!$Dri){ 
+        Write-Host "[src曹位不存在]::" -ForegroundColor:Red -NoNewline
+        Write-Host "磁碟 $srcDriveLetter 不存在，src請選擇其他曹位"; return 
+    }
     $Dri2 = Get-Partition -DriveLetter:$dstDriveLetter -ErrorAction SilentlyContinue
-    if($Dri2) { Write-Host "dstDriveLetter 的曹位 $dstDriveLetter 已存在，請選擇其他曹位"; return }
+    if($Dri2) { 
+        Write-Host "[dst曹位被占用]::" -ForegroundColor:Red -NoNewline
+        Write-Host "磁碟 $dstDriveLetter 已存在，dst請選擇其他曹位"; return 
+    }
     if (!$Size) { $Size = 64GB; Write-Host "預設Size為 $($Size/1GB) GB" } 
     # 計算壓縮空間
     $DriSize = $Dri|Get-PartitionSupportedSize
