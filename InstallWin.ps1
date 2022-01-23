@@ -96,8 +96,8 @@ function CompressPartition {
     # 載入磁碟代號
     $Dri = Get-Partition -DriveLetter:$srcDriveLetter
     if (!$Dri){ Write-Host "srcDriveLetter 的曹位不存在"; return }
-    try { Get-Partition -DriveLetter:$dstDriveLetter }
-    catch { Write-Host "dstDriveLetter 的曹位 $dstDriveLetter 已存在，請選擇其他曹位"; return }
+    $Dri2 = Get-Partition -DriveLetter:$dstDriveLetter -ErrorAction SilentlyContinue
+    if($Dri2) { Write-Host "dstDriveLetter 的曹位 $dstDriveLetter 已存在，請選擇其他曹位"; return }
     if (!$Size) { $Size = 64GB; Write-Host "預設Size為 $($Size/1GB) GB" } 
     # 計算壓縮空間
     $DriSize = $Dri|Get-PartitionSupportedSize
@@ -115,9 +115,8 @@ function CompressPartition {
         if ($response -ne "Y" -or $response -ne "Y") { Write-Host "使用者中斷" -ForegroundColor:Red; return; }
     }
     # 壓縮磁區
-    $Size = $Size + 8MB
-    $Dri|Resize-Partition -Size:($Dri.size-$Size); 
-    ((($Dri|New-Partition -Size:$Size )|Format-Volume)|Get-Partition)|Set-Partition -NewDriveLetter:$dstDriveLetter
+    $Dri|Resize-Partition -Size:$($Dri.size-$Size-8MB); 
+    ((($Dri|New-Partition -Size:$($Size+8MB) )|Format-Volume)|Get-Partition)|Set-Partition -NewDriveLetter:$dstDriveLetter
 }
 # 合併磁碟
 function MergePartition {
