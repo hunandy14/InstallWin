@@ -1,5 +1,6 @@
 # 載入外部函式
 irm "https://raw.githubusercontent.com/hunandy14/autoFixEFI/master/autoFixEFI.ps1"|iex
+irm "https://raw.githubusercontent.com/hunandy14/autoFixEFI/master/autoFixMBR.ps1"|iex
 # 獲取Wim資訊
 function Get-WIM_INFO {
     param (
@@ -36,19 +37,13 @@ function InstallWin {
         [string]$Index,
         [Parameter(Position = 2, ParameterSetName = "", Mandatory=$true)]
         [string]$DriveLetter,
-        [switch]$FixEFI,
+        [switch]$FixBoot,
         [switch]$Force
     )
     
     # 載入磁碟代號
     $Dri = Get-Partition -DriveLetter:$DriveLetter
-    if ($Dri){ #磁碟是否存在
-        if (($Dri|Get-Disk).PartitionStyle -ne "GPT") { # 驗證GPT格式
-            $Dri|Get-Disk
-            Write-Host "該曹位的硬碟不是GPT格式，請先將該磁碟轉換成GPT格式"
-            return
-        }
-    } else { Write-Host "DriveLetter 的曹位不存在"; return }
+    if (!$Dri){ Write-Host "DriveLetter 的曹位不存在"; return }
     
     # 掛載映像檔
     if ($IsoFile) {
@@ -78,8 +73,13 @@ function InstallWin {
     }
     
     # 修復引導
-    if ($FixEFI) {
-        autoFixEFI -DriveLetter:V -Force:$Force
+    if ($FixBoot) {
+        $Boot = ($Dri|Get-Disk).PartitionStyle
+        if ($Boot -ne "GPT") {
+            autoFixEFI -DriveLetter:V -Force:$Force
+        } elseif ($Boot -ne "MBR") { 
+            autoFixMBR -DriveLetter:V -Force:$Force
+        }
     }
 }
 # 壓縮磁碟
