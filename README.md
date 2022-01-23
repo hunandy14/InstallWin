@@ -1,6 +1,12 @@
 # 安裝Windows
 ![](img/InstallWin.png)
 
+## 壓縮磁碟機
+```
+# 從D曹壓縮64G，並新增E曹
+irm bit.ly/33SZpuu|iex; CompressPartition -src:D -dst:E -Size:64GB
+```
+
 ## 查看映像檔資訊
 ```
 # 查看 ISO 映像檔資訊

@@ -139,8 +139,8 @@ function MergePartition {
 }
 # 測試
 function Test-InstallWin {
-    $IsoFile = "D:\DATA\ISO_Files\Win11_Chinese(Traditional)_x64v1.iso"
-    $WimFile = "D:\DATA\ISO_Files\install.wim"
+    # $IsoFile = "D:\DATA\ISO_Files\Win11_Chinese(Traditional)_x64v1.iso"
+    # $WimFile = "D:\DATA\ISO_Files\install.wim"
     # 查看ISO資訊
     # Get-WIM_INFO -IsoFile:$IsoFile
     # Get-WIM_INFO -WimFile:$WimFile
@@ -150,8 +150,7 @@ function Test-InstallWin {
     # 修復引導(不小心打錯中斷了的話)
     # autoFixEFI -DriveLetter:V
     
-    CompressPartition -srcDriveLetter:D -dstDriveLetter:E -Size:64GB
+    # CompressPartition -srcDriveLetter:D -dstDriveLetter:E -Size:64GB
     
     # MergePartition -DriveLetter:D -Force
-} 
-Test-InstallWin
+} # Test-InstallWin
