@@ -152,12 +152,14 @@ function WimIgnore {
     $onedrive = (Get-ChildItem "$($DriveLetter):\Users" -Dir | ForEach-Object {
         Get-ChildItem $_.FullName -Dir -Filter:"Onedrive*"
     })
+    Write-Host "WimIgnore will ignore the following paths"  -ForegroundColor:Yellow
     $onedrive.FullName | ForEach-Object {
+        Write-Host "  - $_"
         $path=$_ -replace ("$DriveLetter`:", "")
         $ignore = $ignore + "$path`n"
     }
-    if (!$Out) { $Out = "$curDir\WimScript2.ini" }
-    [System.IO.File]::WriteAllLines($Out, $ignore);
+    if (!$Out) { $Out = "$curDir\WimScript.ini" }
+    [System.IO.File]::WriteAllText($Out, $ignore.trim("`n"));
 } # WimIgnore -DriveLetter:C -Out:"Z:\WimScript.ini"
 # 備份系統
 function CaptureWim {
