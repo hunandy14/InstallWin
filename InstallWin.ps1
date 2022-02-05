@@ -1,3 +1,68 @@
+# 壓縮磁碟
+function CompressPartition {
+    param (
+        [Parameter(Position = 0, ParameterSetName = "", Mandatory=$true)]
+        [string]$srcDriveLetter,
+        [Parameter(Position = 1, ParameterSetName = "", Mandatory=$true)]
+        [string]$dstDriveLetter,
+        [Parameter(Position = 2, ParameterSetName = "")]
+        [Int64]$Size,
+        [switch] $Force
+    )
+    # 載入磁碟代號
+    $Dri = Get-Partition -DriveLetter:$srcDriveLetter
+    if (!$Dri){ 
+        Write-Host "[src曹位不存在]::" -ForegroundColor:Red -NoNewline
+        Write-Host "磁碟 $srcDriveLetter 不存在，src請選擇其他曹位"; return 
+    }
+    $Dri2 = Get-Partition -DriveLetter:$dstDriveLetter -ErrorAction SilentlyContinue
+    if($Dri2) { 
+        Write-Host "[dst曹位被占用]::" -ForegroundColor:Red -NoNewline
+        Write-Host "磁碟 $dstDriveLetter 已存在，dst請選擇其他曹位"; return 
+    }
+    if (!$Size) { $Size = 64GB; Write-Host "預設Size為 $($Size/1GB) GB" } 
+    # 計算壓縮空間
+    $DriSize = $Dri|Get-PartitionSupportedSize
+    $CmpSize = $DriSize.SizeMax - $DriSize.SizeMin
+    if ($Size -gt $CmpSize) { 
+        Write-Host "[空間不足]::" -ForegroundColor:Red -NoNewline
+        Write-Host "磁碟 $srcDriveLetter 只剩 $([convert]::ToInt64($CmpSize/1MB))MB。" -NoNewline
+        Write-Host "無法壓縮出 $($Size/1MB)MB"
+        return
+    }
+    # 壓縮
+    Write-Host "  即將從 $srcDriveLetter 曹壓縮 $($Size/1GB)GB，並建立 $dstDriveLetter 曹" -ForegroundColor:Yellow
+    if (!$Force) {
+        $response = Read-Host "  沒有異議，請輸入Y (Y/N) ";
+        if ($response -ne "Y" -or $response -ne "Y") { Write-Host "使用者中斷" -ForegroundColor:Red; return; }
+    }
+    # 壓縮磁區
+    $Dri|Resize-Partition -Size:$($Dri.size-$Size-8MB); 
+    ((($Dri|New-Partition -Size:$($Size+8MB) )|Format-Volume)|Get-Partition)|Set-Partition -NewDriveLetter:$dstDriveLetter
+}
+# 合併磁碟
+function MergePartition {
+    param (
+        [Parameter(Position = 0, ParameterSetName = "", Mandatory=$true)]
+        [string]$DriveLetter,
+        [switch]$Force
+    )
+    # 載入磁碟代號
+    $Dri = Get-Partition -DriveLetter:$DriveLetter
+    if (!$Dri){ Write-Host "DriveLetter 的曹位不存在"; return }
+    # 合併到滿
+    $Size = ($Dri|Get-PartitionSupportedSize).SizeMax
+    if ($Size-$Dri.Size -eq 0) { Write-Host "磁碟 $DriveLetter 後方沒有多餘的空間可以合併"; return }
+    Write-Host "磁碟 $DriveLetter 後還有 $(($Size-$Dri.Size)/1MB)MB 的空間，即將合併這些空間"
+    if (!$Force) {
+        $response = Read-Host "  沒有異議，請輸入Y (Y/N) ";
+        if ($response -ne "Y" -or $response -ne "Y") { Write-Host "使用者中斷" -ForegroundColor:Red; return; }
+    }
+    $Dri|Resize-Partition -Size:$Size
+}
+
+
+
 # 獲取Wim資訊
 function Get-WIM_INFO {
     param (
@@ -72,68 +137,9 @@ function InstallWin {
     irm "https://raw.githubusercontent.com/hunandy14/autoFixEFI/master/autoFixBoot.ps1" | iex
     autoFixBoot -DriveLetter:$DriveLetter -Force
 }
-# 壓縮磁碟
-function CompressPartition {
-    param (
-        [Parameter(Position = 0, ParameterSetName = "", Mandatory=$true)]
-        [string]$srcDriveLetter,
-        [Parameter(Position = 1, ParameterSetName = "", Mandatory=$true)]
-        [string]$dstDriveLetter,
-        [Parameter(Position = 2, ParameterSetName = "")]
-        [Int64]$Size,
-        [switch] $Force
-    )
-    # 載入磁碟代號
-    $Dri = Get-Partition -DriveLetter:$srcDriveLetter
-    if (!$Dri){ 
-        Write-Host "[src曹位不存在]::" -ForegroundColor:Red -NoNewline
-        Write-Host "磁碟 $srcDriveLetter 不存在，src請選擇其他曹位"; return 
-    }
-    $Dri2 = Get-Partition -DriveLetter:$dstDriveLetter -ErrorAction SilentlyContinue
-    if($Dri2) { 
-        Write-Host "[dst曹位被占用]::" -ForegroundColor:Red -NoNewline
-        Write-Host "磁碟 $dstDriveLetter 已存在，dst請選擇其他曹位"; return 
-    }
-    if (!$Size) { $Size = 64GB; Write-Host "預設Size為 $($Size/1GB) GB" } 
-    # 計算壓縮空間
-    $DriSize = $Dri|Get-PartitionSupportedSize
-    $CmpSize = $DriSize.SizeMax - $DriSize.SizeMin
-    if ($Size -gt $CmpSize) { 
-        Write-Host "[空間不足]::" -ForegroundColor:Red -NoNewline
-        Write-Host "磁碟 $srcDriveLetter 只剩 $([convert]::ToInt64($CmpSize/1MB))MB。" -NoNewline
-        Write-Host "無法壓縮出 $($Size/1MB)MB"
-        return
-    }
-    # 壓縮
-    Write-Host "  即將從 $srcDriveLetter 曹壓縮 $($Size/1GB)GB，並建立 $dstDriveLetter 曹" -ForegroundColor:Yellow
-    if (!$Force) {
-        $response = Read-Host "  沒有異議，請輸入Y (Y/N) ";
-        if ($response -ne "Y" -or $response -ne "Y") { Write-Host "使用者中斷" -ForegroundColor:Red; return; }
-    }
-    # 壓縮磁區
-    $Dri|Resize-Partition -Size:$($Dri.size-$Size-8MB); 
-    ((($Dri|New-Partition -Size:$($Size+8MB) )|Format-Volume)|Get-Partition)|Set-Partition -NewDriveLetter:$dstDriveLetter
-}
-# 合併磁碟
-function MergePartition {
-    param (
-        [Parameter(Position = 0, ParameterSetName = "", Mandatory=$true)]
-        [string]$DriveLetter,
-        [switch]$Force
-    )
-    # 載入磁碟代號
-    $Dri = Get-Partition -DriveLetter:$DriveLetter
-    if (!$Dri){ Write-Host "DriveLetter 的曹位不存在"; return }
-    # 合併到滿
-    $Size = ($Dri|Get-PartitionSupportedSize).SizeMax
-    if ($Size-$Dri.Size -eq 0) { Write-Host "磁碟 $DriveLetter 後方沒有多餘的空間可以合併"; return }
-    Write-Host "磁碟 $DriveLetter 後還有 $(($Size-$Dri.Size)/1MB)MB 的空間，即將合併這些空間"
-    if (!$Force) {
-        $response = Read-Host "  沒有異議，請輸入Y (Y/N) ";
-        if ($response -ne "Y" -or $response -ne "Y") { Write-Host "使用者中斷" -ForegroundColor:Red; return; }
-    }
-    $Dri|Resize-Partition -Size:$Size
-}
+
+
+
 # 備份系統
 function CaptureWim {
     param (
@@ -155,6 +161,8 @@ function CaptureWim {
     if ($Compress) { $cmd = "$cmd /Compress:max" }
     Invoke-Expression $cmd
 }
+
+
 
 # 測試
 # function Test-InstallWin {
