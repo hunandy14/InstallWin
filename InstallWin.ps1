@@ -140,6 +140,25 @@ function InstallWin {
 
 
 
+# 建立 WimIgnore.ini 檔案
+function WimIgnore {
+    param (
+        [Parameter(Position = 0, ParameterSetName = "", Mandatory=$true)]
+        [string] $DriveLetter,
+        [string] $Out
+    )
+    if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
+    $ignore = Invoke-RestMethod "raw.githubusercontent.com/hunandy14/WimIgnore/master/WimScript.ini"
+    $onedrive = (Get-ChildItem "$($DriveLetter):\Users" -Dir | ForEach-Object {
+        Get-ChildItem $_.FullName -Dir -Filter:"Onedrive*"
+    })
+    $onedrive.FullName | ForEach-Object {
+        $path=$_ -replace ("$DriveLetter`:", "")
+        $ignore = $ignore + "$path`n"
+    }
+    if (!$Out) { $Out = "$curDir\WimScript2.ini" }
+    [System.IO.File]::WriteAllLines($Out, $ignore);
+} # WimIgnore -DriveLetter:C -Out:"Z:\WimScript.ini"
 # 備份系統
 function CaptureWim {
     param (
@@ -156,7 +175,7 @@ function CaptureWim {
     $WimScript = "$env:TEMP\WimScript.ini"
     if (!$Name) { $Name = "SystemBackup" }
     
-    irm bit.ly/34yREdN|iex; WimIgnore $DriveLetter -Out:$WimScript
+    WimIgnore $DriveLetter -Out:$WimScript
     $cmd = "Dism /Capture-Image /ImageFile:$ImageFile /CaptureDir:$CaptureDir /Name:$Name /ConfigFile:$WimScript"
     if ($Compress) { $cmd = "$cmd /Compress:max" }
     Invoke-Expression $cmd
