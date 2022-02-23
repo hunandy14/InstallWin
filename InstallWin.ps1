@@ -99,6 +99,7 @@ function InstallWin {
         [string]$WimFile, 
         [Parameter(Position = 2, ParameterSetName = "")]
         [string]$Index,
+        [switch]$Compact,
         [switch]$Force
     )
     if (!$Index) { $Index="1" }
@@ -127,7 +128,9 @@ function InstallWin {
         }
         Write-Host "開始安裝 Windows..." -ForegroundColor:Yellow
         $WinPath = $DriveLetter+":\"
-        Dism /apply-image /imagefile:$wim /index:$Index /applydir:$WinPath
+        $cmd = "Dism /apply-image /imagefile:$wim /index:$Index /applydir:$WinPath"
+        if ($Compact) {$cmd = $cmd+" /compact"}
+        Invoke-Expression $cmd
     }
     if ($IsoFile) {
         $Mount = Dismount-DiskImage -InputObject:$Mount
