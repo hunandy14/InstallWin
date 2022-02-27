@@ -142,7 +142,7 @@ function InstallWin {
     # 修復引導
     irm "https://raw.githubusercontent.com/hunandy14/autoFixEFI/master/autoFixBoot.ps1" | iex
     autoFixBoot -DriveLetter:$DriveLetter -Force
-}
+} # InstallWin -Wim:"F:\sources\install.esd" -Dri:E -Compact
 
 
 
