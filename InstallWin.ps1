@@ -118,6 +118,12 @@ function InstallWin {
     
     # 安裝到指定曹位
     if ($Dri) {
+        # 安裝指令
+        $WinPath = $DriveLetter+":\"
+        $cmd = "Dism /apply-image /imagefile:$wim /index:$Index /applydir:$WinPath"
+        if ($Compact) {$cmd = $cmd+" /compact"}
+        Write-Host $cmd
+        # 警告
         Write-Host "即將開始安裝Windows到" -NoNewline
         Write-Host " ($DriveLetter`:\) " -ForegroundColor:Yellow -NoNewline
         Write-Host "曹位。程序不會自動格式化" -NoNewline
@@ -127,9 +133,6 @@ function InstallWin {
             if ($response -ne "Y" -or $response -ne "Y") { Write-Host "使用者中斷" -ForegroundColor:Red; return; }
         }
         Write-Host "開始安裝 Windows..." -ForegroundColor:Yellow
-        $WinPath = $DriveLetter+":\"
-        $cmd = "Dism /apply-image /imagefile:$wim /index:$Index /applydir:$WinPath"
-        if ($Compact) {$cmd = $cmd+" /compact"}
         Invoke-Expression $cmd
     }
     if ($IsoFile) {
