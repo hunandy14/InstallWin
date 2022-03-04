@@ -92,15 +92,15 @@ function Get-WIM_INFO {
 function InstallWin {
     [CmdletBinding(DefaultParameterSetName = "File")]
     param (
-        [Parameter(Position = 0, ParameterSetName = "", Mandatory)]
-        [string]$DriveLetter,
-        [Parameter(Position = 1, ParameterSetName = "File", Mandatory)]
-        [string]$File = '',
-        [Parameter(Position = 1, ParameterSetName = "IsoFile", Mandatory)]
+        [Parameter(Position = 0, ParameterSetName = "File", Mandatory)]
+        [string]$File,
+        [Parameter(Position = 0, ParameterSetName = "IsoFile", Mandatory)]
         [string]$IsoFile,
-        [Parameter(Position = 1, ParameterSetName = "WimFile", Mandatory)]
+        [Parameter(Position = 0, ParameterSetName = "WimFile", Mandatory)]
         [string]$WimFile, 
-        [Parameter(Position = 2, ParameterSetName = "")]
+        [Parameter(Position = 1, ParameterSetName = "", Mandatory)]
+        [string]$DriveLetter,
+        [Parameter(ParameterSetName = "")]
         [string]$Index = '1',
         [switch]$Compact,
         [switch]$Force
@@ -112,7 +112,7 @@ function InstallWin {
     # 獲取映像檔
     if ($File -match '(.iso)$') {
         $IsoFile = $File
-    }  elseif($File -ne '') {
+    } elseif ($File) {
         $WimFile = $File
     }
     if ($IsoFile) {
@@ -140,14 +140,16 @@ function InstallWin {
         Write-Host "請確保該曹位已經格式化" -ForegroundColor:Red
         if (!$Force) {
             $response = Read-Host "  沒有異議，請輸入Y (Y/N) ";
-            if ($response -ne "Y" -or $response -ne "Y") { Write-Host "使用者中斷" -ForegroundColor:Red; return; }
+            if ($response -ne "Y" -or $response -ne "Y") { 
+                Write-Host "使用者中斷" -ForegroundColor:Red
+                if ($IsoFile) { $Mount = Dismount-DiskImage -InputObject:$Mount }
+                return
+            }
         }
         Write-Host "開始安裝 Windows..." -ForegroundColor:Yellow
         Invoke-Expression $cmd
     }
-    if ($IsoFile) {
-        $Mount = Dismount-DiskImage -InputObject:$Mount
-    }
+    if ($IsoFile) { $Mount = Dismount-DiskImage -InputObject:$Mount }
     
     # 修復引導
     Invoke-RestMethod "https://raw.githubusercontent.com/hunandy14/autoFixEFI/master/autoFixBoot.ps1" | Invoke-Expression
