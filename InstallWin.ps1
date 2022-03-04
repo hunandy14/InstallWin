@@ -38,7 +38,7 @@ function CompressPartition {
     }
     # 壓縮磁區
     $Dri|Resize-Partition -Size:$($Dri.size-$Size-8MB); 
-    ((($Dri|New-Partition -Size:$($Size+8MB) )|Format-Volume -FileSystem:FAT32 -Force)|Get-Partition)|Set-Partition -NewDriveLetter:$dstDriveLetter
+    ((($Dri|New-Partition -Size:$($Size+8MB) )|Format-Volume -FileSystem:NTFS -Force)|Get-Partition)|Set-Partition -NewDriveLetter:$dstDriveLetter
 }
 # 合併磁碟
 function MergePartition {
