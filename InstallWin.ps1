@@ -1,9 +1,9 @@
 # 壓縮磁碟
 function CompressPartition {
     param (
-        [Parameter(Position = 0, ParameterSetName = "", Mandatory=$true)]
+        [Parameter(Position = 0, ParameterSetName = "", Mandatory)]
         [string]$srcDriveLetter,
-        [Parameter(Position = 1, ParameterSetName = "", Mandatory=$true)]
+        [Parameter(Position = 1, ParameterSetName = "", Mandatory)]
         [string]$dstDriveLetter,
         [Parameter(Position = 2, ParameterSetName = "")]
         [Int64]$Size,
@@ -38,7 +38,7 @@ function CompressPartition {
     }
     # 壓縮磁區
     $Dri|Resize-Partition -Size:$($Dri.size-$Size-8MB); 
-    ((($Dri|New-Partition -Size:$($Size+8MB) )|Format-Volume)|Get-Partition)|Set-Partition -NewDriveLetter:$dstDriveLetter
+    ((($Dri|New-Partition -Size:$($Size+8MB) )|Format-Volume -FileSystem:FAT32 -Force)|Get-Partition)|Set-Partition -NewDriveLetter:$dstDriveLetter
 }
 # 合併磁碟
 function MergePartition {
