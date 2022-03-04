@@ -33,8 +33,13 @@ function CompressPartition {
         [string] $dstDriveLetter,
         [Parameter(Position = 2, ParameterSetName = "", Mandatory)]
         [UInt64] $Size,
+        [Parameter(ParameterSetName = "FileSystem")]
+        [string] $FileSystem = 'NTFS',
+        [Parameter(ParameterSetName = "EFI")]
+        [switch] $EFI,
         [switch] $Force
     )
+    $EFI_ID = "{c12a7328-f81f-11d2-ba4b-00a0c93ec93b}"
     # 載入磁碟代號
     $Dri = Get-Partition -DriveLetter:$srcDriveLetter
     if (!$Dri){ 
@@ -87,8 +92,16 @@ function CompressPartition {
     Write-Host "建立" -NoNewline
     Write-Host " ($dstDriveLetter`:\) " -NoNewline -ForegroundColor:Yellow
     Write-Host "$(__FormateByte__ $Size)"
-    ((($Dri|New-Partition -Size:$Size)|Format-Volume -FileSystem:NTFS -Force)|Get-Partition)|Set-Partition -NewDriveLetter:$dstDriveLetter
-} # CompressPartition G W 300MB -Force
+
+    if ($EFI) {
+        ((($Dri|New-Partition -Size:($Size) -GptType:$EFI_ID)|Format-Volume -FileSystem:FAT32 -Force)|Get-Partition)|Set-Partition -NewDriveLetter:$dstDriveLetter
+
+    } else {
+        ((($Dri|New-Partition -Size:$Size)|Format-Volume -FileSystem:$FileSystem -Force)|Get-Partition)|Set-Partition -NewDriveLetter:$dstDriveLetter
+    }
+}
+# CompressPartition G W 300MB -Force
+# CompressPartition G X 300MB -EFI -Force
 
 # 合併磁碟
 function MergePartition {
