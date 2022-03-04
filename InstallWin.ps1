@@ -90,30 +90,39 @@ function Get-WIM_INFO {
 }
 # 安裝Windows
 function InstallWin {
+    [CmdletBinding(DefaultParameterSetName = "File")]
     param (
-        [Parameter(Position = 0, ParameterSetName = "", Mandatory=$true)]
+        [Parameter(Position = 0, ParameterSetName = "", Mandatory)]
         [string]$DriveLetter,
-        [Parameter(Position = 1, ParameterSetName = "IsoFile", Mandatory=$true)]
+        [Parameter(Position = 1, ParameterSetName = "File", Mandatory)]
+        [string]$File = '',
+        [Parameter(Position = 1, ParameterSetName = "IsoFile", Mandatory)]
         [string]$IsoFile,
-        [Parameter(Position = 1, ParameterSetName = "WimFile", Mandatory=$true)]
+        [Parameter(Position = 1, ParameterSetName = "WimFile", Mandatory)]
         [string]$WimFile, 
         [Parameter(Position = 2, ParameterSetName = "")]
-        [string]$Index,
+        [string]$Index = '1',
         [switch]$Compact,
         [switch]$Force
     )
-    if (!$Index) { $Index="1" }
     # 載入磁碟代號
     $Dri = Get-Partition -DriveLetter:$DriveLetter
     if (!$Dri){ Write-Host "DriveLetter 的曹位不存在"; return }
     
-    # 掛載映像檔
+    # 獲取映像檔
+    if ($File -match '(.iso)$') {
+        $IsoFile = $File
+    }  elseif($File -ne '') {
+        $WimFile = $File
+    }
     if ($IsoFile) {
         $Mount = Mount-DiskImage $IsoFile
-        if (!$Mount) { Write-Host "無法載入映像檔，檢查映像檔位置是否正確"; return}
+        if (!$Mount) { Write-Host "無法載入映像檔, 檢查映像檔位置是否正確"; return}
         $wim = (($Mount)|Get-Volume).DriveLetter+":\sources\install.wim";
     } elseif ($WimFile) {
-        $wim = $WimFile
+        if(!(Get-Item $WimFile -ErrorAction:SilentlyContinue)){
+            Write-Error "映像檔讀取錯誤, 輸入的路徑可能有誤"; return
+        } $wim = $WimFile
     }
     
     # 安裝到指定曹位
@@ -124,8 +133,9 @@ function InstallWin {
         if ($Compact) {$cmd = $cmd+" /compact"}
         Write-Host $cmd
         # 警告
+        $DriName = ($Dri|Get-Volume).FileSystemLabel
         Write-Host "即將開始安裝Windows到" -NoNewline
-        Write-Host " ($DriveLetter`:\) " -ForegroundColor:Yellow -NoNewline
+        Write-Host " $DriName($DriveLetter`:\) " -ForegroundColor:Yellow -NoNewline
         Write-Host "曹位。程序不會自動格式化" -NoNewline
         Write-Host "請確保該曹位已經格式化" -ForegroundColor:Red
         if (!$Force) {
@@ -140,7 +150,7 @@ function InstallWin {
     }
     
     # 修復引導
-    irm "https://raw.githubusercontent.com/hunandy14/autoFixEFI/master/autoFixBoot.ps1" | iex
+    Invoke-RestMethod "https://raw.githubusercontent.com/hunandy14/autoFixEFI/master/autoFixBoot.ps1" | Invoke-Expression
     autoFixBoot -DriveLetter:$DriveLetter -Force
 } # InstallWin -Wim:"F:\sources\install.esd" -Dri:E -Compact
 
