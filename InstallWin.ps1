@@ -28,44 +28,68 @@ function __FormateByte__ {
 function CompressPartition {
     param (
         [Parameter(Position = 0, ParameterSetName = "", Mandatory)]
-        [string]$srcDriveLetter,
+        [string] $srcDriveLetter,
         [Parameter(Position = 1, ParameterSetName = "", Mandatory)]
-        [string]$dstDriveLetter,
-        [Parameter(Position = 2, ParameterSetName = "")]
-        [Int64]$Size,
+        [string] $dstDriveLetter,
+        [Parameter(Position = 2, ParameterSetName = "", Mandatory)]
+        [UInt64] $Size,
         [switch] $Force
     )
     # 載入磁碟代號
     $Dri = Get-Partition -DriveLetter:$srcDriveLetter
     if (!$Dri){ 
-        Write-Host "[src曹位不存在]::" -ForegroundColor:Red -NoNewline
-        Write-Host "磁碟 $srcDriveLetter 不存在，src請選擇其他曹位"; return 
+        Write-Host "[src曹位不存在]" -ForegroundColor:Red -NoNewline
+        Write-Host "::磁碟 $srcDriveLetter 不存在, src請選擇其他曹位"; return 
     }
     $Dri2 = Get-Partition -DriveLetter:$dstDriveLetter -ErrorAction SilentlyContinue
     if($Dri2) { 
-        Write-Host "[dst曹位被占用]::" -ForegroundColor:Red -NoNewline
-        Write-Host "磁碟 $dstDriveLetter 已存在，dst請選擇其他曹位"; return 
+        Write-Host "[dst曹位被占用]" -ForegroundColor:Red -NoNewline
+        Write-Host "::磁碟 $dstDriveLetter 已存在, dst請選擇其他曹位"; return 
     }
-    if (!$Size) { $Size = 64GB; Write-Host "預設Size為 $($Size/1GB) GB" } 
-    # 計算壓縮空間
-    $DriSize = $Dri|Get-PartitionSupportedSize
-    $CmpSize = $DriSize.SizeMax - $DriSize.SizeMin
-    if ($Size -gt $CmpSize) { 
-        Write-Host "[空間不足]::" -ForegroundColor:Red -NoNewline
-        Write-Host "磁碟 $srcDriveLetter 只剩 $([convert]::ToInt64($CmpSize/1MB))MB。" -NoNewline
-        Write-Host "無法壓縮出 $($Size/1MB)MB"
+    # 查詢與計算空間
+    $SupSize = $Dri|Get-PartitionSupportedSize
+    $CurSize = $Dri.size
+    $MaxSize = $SupSize.SizeMax
+    $AvailableSize = $SupSize.SizeMax - $SupSize.SizeMin # 可用空間上限
+    $RemainingSize = $MaxSize - $CurSize # 空閒空間
+    [UInt64]$ReSize = $MaxSize - $Size
+    # 目標分區在結尾(GPT結尾必須保留 1MB 空間)
+    if ((($Dri|Get-Disk|Get-Partition)[-1]).UniqueId -eq $Dri.UniqueId) {
+        $ReSize = $ReSize - 1MB
+    }
+    # 檢查剩餘容量充不足(壓縮空間大於可用空間上限)
+    if ($Size -gt $AvailableSize) { 
+        Write-Host "[空間不足]" -ForegroundColor:Red -NoNewline
+        Write-Host "::磁碟 $srcDriveLetter 只剩 " -NoNewline
+        Write-Host "$(__FormateByte__ $RemainingSize) " -NoNewline -ForegroundColor:Yellow
+        Write-Host "無法壓縮出 " -NoNewline
+        Write-Host "$(__FormateByte__ $Size)" -NoNewline -ForegroundColor:Yellow
+        Write-Host ""
         return
     }
     # 壓縮
-    Write-Host "  即將從 $srcDriveLetter 曹壓縮 $($Size/1GB)GB，並建立 $dstDriveLetter 曹" -ForegroundColor:Yellow
-    if (!$Force) {
-        $response = Read-Host "  沒有異議，請輸入Y (Y/N) ";
-        if ($response -ne "Y" -or $response -ne "Y") { Write-Host "使用者中斷" -ForegroundColor:Red; return; }
+    $CmpSize = $CurSize - $ReSize
+    if ($CmpSize -lt 1MB) { $ReSize = $CurSize -1MB } # 低於1MB無法壓縮
+    if ($CmpSize -gt 0) {
+        # 警告
+        Write-Host "  即將從" -NoNewline
+        Write-Host " ($srcDriveLetter`:\) " -NoNewline -ForegroundColor:Yellow
+        Write-Host "壓縮" -NoNewline
+        Write-Host " $(__FormateByte__ $CmpSize) " -NoNewline -ForegroundColor:Yellow
+        Write-Host ""
+        if (!$Force) {
+            $response = Read-Host "  沒有異議, 請輸入Y (Y/N) ";
+            if ($response -ne "Y" -or $response -ne "Y") { Write-Host "使用者中斷" -ForegroundColor:Red; return; }
+        }
+        $Dri|Resize-Partition -Size:$ReSize
     }
-    # 壓縮磁區
-    $Dri|Resize-Partition -Size:$($Dri.size-$Size-8MB); 
-    ((($Dri|New-Partition -Size:$($Size+8MB) )|Format-Volume -FileSystem:NTFS -Force)|Get-Partition)|Set-Partition -NewDriveLetter:$dstDriveLetter
-}
+    # 建立新分區
+    Write-Host "建立" -NoNewline
+    Write-Host " ($dstDriveLetter`:\) " -NoNewline -ForegroundColor:Yellow
+    Write-Host "$(__FormateByte__ $Size)"
+    ((($Dri|New-Partition -Size:$Size)|Format-Volume -FileSystem:NTFS -Force)|Get-Partition)|Set-Partition -NewDriveLetter:$dstDriveLetter
+} # CompressPartition G W 300MB -Force
+
 # 合併磁碟
 function MergePartition {
     param (
