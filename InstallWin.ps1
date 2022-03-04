@@ -1,3 +1,29 @@
+# 格式化磁碟顯示字串
+function __FormateByte__ {
+    param (
+        [Parameter(Position = 0, ParameterSetName = "", Mandatory)]
+        [UInt64] $Size
+    )
+    $ByteInt = @(1KB, 1MB, 1GB)
+    $ByteString = @("Byte", "KB", "MB", "GB")
+    $Idx = 0
+    [double]$Num = [double]$Size
+    for ($i = 0; $i -lt $ByteInt.Count; $i++) {
+        
+        $quan = $ByteInt[0]
+        if($Num -ge $quan){
+            $Num = $Num / [double]$quan
+            $Idx++
+        } else { break }
+    }
+    $out = [Math]::Round($Num, 2, [MidpointRounding]::AwayFromZero)
+    $out = [string]$out + ' ' + $ByteString[$Idx]
+    return $out
+} 
+# __FormateByte__ 65544MB
+# __FormateByte__ (300MB+1MB)
+# __FormateByte__ (9000)
+
 # 壓縮磁碟
 function CompressPartition {
     param (
