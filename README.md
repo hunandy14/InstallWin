@@ -31,15 +31,9 @@ irm bit.ly/340Pi6W|iex; autoFixBoot W
 
 ## 查看映像檔資訊
 ```bash
-# 查看 ISO 映像檔資訊
-$IsoFile = "D:\DATA\ISO_Files\Win11_Chinese(Traditional)_x64v1.iso"
-irm bit.ly/33SZpuu|iex; Get-WIM_INFO -IsoFile:$IsoFile
-irm bit.ly/33SZpuu|iex; Get-WIM_INFO -IsoFile:$IsoFile -Index:1
-
-# 查看 WIM 映像檔資訊
-$WimFile = "D:\DATA\ISO_Files\install.wim"
-irm bit.ly/33SZpuu|iex; Get-WIM_INFO -WimFile:$WimFile
-irm bit.ly/33SZpuu|iex; Get-WIM_INFO -WimFile:$WimFile -Index:1
+# 查看映像檔資訊
+irm bit.ly/33SZpuu|iex; Get-WIM_INFO "D:\DATA\ISO_Files\Win11_Chinese(Traditional)_x64v1.iso"
+irm bit.ly/33SZpuu|iex; Get-WIM_INFO "D:\DATA\ISO_Files\install.wim"
 ```
 
 

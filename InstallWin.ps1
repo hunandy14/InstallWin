@@ -76,7 +76,7 @@ function __GetWIM_Path__ {
     # 獲取Wim檔案路徑 (ISO)
     if ($Path -match '(.iso)$') {
         $DiskImage  = Mount-DiskImage $Path
-        $SourcePath = (($DiskImage)|Get-Volume).DriveLetter+":\sources";
+        $SourcePath = (($DiskImage)|Get-Volume).DriveLetter+":\sources"
         if (Test-Path "$SourcePath\install.wim" -PathType:Leaf) {
             $ImgPath = "$SourcePath\install.wim"
         } elseif (Test-Path "$SourcePath\install.esd" -PathType:Leaf) {
@@ -99,28 +99,27 @@ function __GetWIM_Path__ {
 # 獲取Wim資訊
 function Get-WIM_INFO {
     param (
-        [Parameter(Position = 0, ParameterSetName = "IsoFile", Mandatory=$true)]
-        [string]$IsoFile,
-        [Parameter(Position = 0, ParameterSetName = "WimFile", Mandatory=$true)]
-        [string]$WimFile,
+        [Parameter(Position = 0, ParameterSetName = "", Mandatory)]
+        [string] $Path,
         [Parameter(Position = 1, ParameterSetName = "")]
-        [string]$Index
+        [uint] $Index = 0
     )
-    if ($IsoFile) {
-        $Mount = Mount-DiskImage $IsoFile
-        $wim = (($Mount)|Get-Volume).DriveLetter+":\sources\install.wim";
-    } elseif ($WimFile) {
-        $wim = $WimFile
+    # 獲取Wim檔案
+    $img = __GetWIM_Path__($Path)
+    
+    # 查看Win檔案內容
+    if ($Index -eq 0) {
+        Dism /Get-ImageInfo /ImageFile:$($img.Path)
+    } elseif ($Index -ge 1) {
+        Dism /Get-ImageInfo /ImageFile:$($img.Path) /index:$Index
     }
     
-    if ($Index) {
-        Dism /Get-ImageInfo /ImageFile:$wim /index:$Index
-    } else {
-        Dism /Get-ImageInfo /ImageFile:$wim
-    }
-    
-    if ($IsoFile) { $Mount = Dismount-DiskImage -InputObject:$Mount }
-}
+    # 卸載ISO檔案
+    if ($img.DiskImage) { $img.DiskImage|Dismount-DiskImage|Out-Null }
+} 
+# Get-WIM_INFO "D:\DATA\ISO_Files\Win11_Chinese(Traditional)_x64v1.iso"
+# Get-WIM_INFO "D:\DATA\ISO_Files\install.wim"
+
 # 安裝Windows
 function InstallWin {
     [CmdletBinding(DefaultParameterSetName = "File")]
