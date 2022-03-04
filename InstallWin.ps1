@@ -62,6 +62,39 @@ function MergePartition {
 }
 
 
+# 獲取Wim檔案位置 (ISO檔自動掛載)
+function __GetWIM_Path__ {
+    param (
+        [Parameter(Position = 0, ParameterSetName = "", Mandatory)]
+        [string] $Path
+    )
+    $ImgPath=''
+    $DiskImage=''
+    # 檢查
+    if (!(Test-Path $Path -PathType:Leaf)) { Write-Error "輸入的映像檔路徑無效，檢查是否正確"; return }
+    
+    # 獲取Wim檔案路徑 (ISO)
+    if ($Path -match '(.iso)$') {
+        $DiskImage  = Mount-DiskImage $Path
+        $SourcePath = (($DiskImage)|Get-Volume).DriveLetter+":\sources";
+        if (Test-Path "$SourcePath\install.wim" -PathType:Leaf) {
+            $ImgPath = "$SourcePath\install.wim"
+        } elseif (Test-Path "$SourcePath\install.esd" -PathType:Leaf) {
+            $ImgPath = "$SourcePath\install.esd"
+        } else {
+            Write-Error "輸入的映像檔可能不是 Windwos 安裝檔"
+        }
+    } else { $ImgPath = $Path }
+    
+    # 建立物件
+    $Image = New-Object PSObject -Property:@{
+        Path      = $ImgPath
+        DiskImage = $DiskImage
+    }
+    return $Image
+} 
+# __GetWIM_Path__ "D:\DATA\ISO_Files\Win11_Chinese(Traditional)_x64v1.iso"
+# __GetWIM_Path__ "D:\DATA\ISO_Files\install.wim"
 
 # 獲取Wim資訊
 function Get-WIM_INFO {
