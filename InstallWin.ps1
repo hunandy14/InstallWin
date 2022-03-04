@@ -95,6 +95,7 @@ function __GetWIM_Path__ {
 } 
 # __GetWIM_Path__ "D:\DATA\ISO_Files\Win11_Chinese(Traditional)_x64v1.iso"
 # __GetWIM_Path__ "D:\DATA\ISO_Files\install.wim"
+# __GetWIM_Path__ "D:\DATA\ISO_Files\Windows10.iso"
 
 # 獲取Wim資訊
 function Get-WIM_INFO {
@@ -125,37 +126,22 @@ function InstallWin {
     [CmdletBinding(DefaultParameterSetName = "File")]
     param (
         [Parameter(Position = 0, ParameterSetName = "File", Mandatory)]
-        [string]$File,
-        [Parameter(Position = 0, ParameterSetName = "IsoFile", Mandatory)]
-        [string]$IsoFile,
-        [Parameter(Position = 0, ParameterSetName = "WimFile", Mandatory)]
-        [string]$WimFile, 
+        [string] $Path,
         [Parameter(Position = 1, ParameterSetName = "", Mandatory)]
-        [string]$DriveLetter,
+        [string] $DriveLetter,
         [Parameter(ParameterSetName = "")]
-        [string]$Index = '1',
-        [switch]$Compact,
-        [switch]$Force
+        [string] $Index = '1',
+        [switch] $Compact,
+        [switch] $Force
     )
     # 載入磁碟代號
     $Dri = Get-Partition -DriveLetter:$DriveLetter
     if (!$Dri){ Write-Host "DriveLetter 的曹位不存在"; return }
     
-    # 獲取映像檔
-    if ($File -match '(.iso)$') {
-        $IsoFile = $File
-    } elseif ($File) {
-        $WimFile = $File
-    }
-    if ($IsoFile) {
-        $Mount = Mount-DiskImage $IsoFile
-        if (!$Mount) { Write-Host "無法載入映像檔, 檢查映像檔位置是否正確"; return}
-        $wim = (($Mount)|Get-Volume).DriveLetter+":\sources\install.wim";
-    } elseif ($WimFile) {
-        if(!(Get-Item $WimFile -ErrorAction:SilentlyContinue)){
-            Write-Error "映像檔讀取錯誤, 輸入的路徑可能有誤"; return
-        } $wim = $WimFile
-    }
+    # 獲取Wim檔案
+    $img = __GetWIM_Path__($Path)
+    $wim   = $img.Path
+    $Mount = $img.DiskImage
     
     # 安裝到指定曹位
     if ($Dri) {
@@ -174,20 +160,21 @@ function InstallWin {
             $response = Read-Host "  沒有異議，請輸入Y (Y/N) ";
             if ($response -ne "Y" -or $response -ne "Y") { 
                 Write-Host "使用者中斷" -ForegroundColor:Red
-                if ($IsoFile) { $Mount = Dismount-DiskImage -InputObject:$Mount }
+                if ($Mount) { $Mount|Dismount-DiskImage|Out-Null }
                 return
             }
         }
         Write-Host "開始安裝 Windows..." -ForegroundColor:Yellow
         Invoke-Expression $cmd
     }
-    if ($IsoFile) { $Mount = Dismount-DiskImage -InputObject:$Mount }
+    if ($Mount) { $Mount|Dismount-DiskImage|Out-Null }
     
     # 修復引導
     Invoke-RestMethod "https://raw.githubusercontent.com/hunandy14/autoFixEFI/master/autoFixBoot.ps1" | Invoke-Expression
     autoFixBoot -DriveLetter:$DriveLetter -Force
-} # InstallWin -Wim:"F:\sources\install.esd" -Dri:E -Compact
-
+} 
+# InstallWin "D:\DATA\ISO_Files\Win11_Chinese(Traditional)_x64v1.iso" -Dri:E -Compact
+# InstallWin "D:\DATA\ISO_Files\install.wim" -Dri:E -Compact
 
 
 # 建立 WimIgnore.ini 檔案
