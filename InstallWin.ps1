@@ -112,6 +112,7 @@ function CompressPartition {
             $BootDri = (($Dri|New-Partition -Size:($Size))|Format-Volume -FileSystem:NTFS -Force)|Get-Partition
             $BootDri|Set-Partition -NewDriveLetter:$dstDriveLetter
             $BootDri|Set-Partition -IsActive $True
+            $BootDri|Get-Volume|Set-Volume -NewFileSystemLabel "系統保留"
             Write-Host "已經建立開機磁區 $($BootDri.DriveLetter)"
             $cmd = "bcdboot $($srcDriveLetter):\windows /f BIOS /s $dstDriveLetter`:\ /l zh-tw"
             Write-Host $cmd
