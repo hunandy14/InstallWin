@@ -36,10 +36,8 @@ function CompressPartition {
         [UInt64] $Size,
         [Parameter(ParameterSetName = "FileSystem")]
         [string] $FileSystem = 'NTFS',
-        [Parameter(ParameterSetName = "EFI")]
-        [switch] $EFI,
-        [Parameter(ParameterSetName = "MBR")]
-        [switch] $MBR,
+        [Parameter(ParameterSetName = "Boot")]
+        [switch] $Boot,
         [switch] $Force
     )
     $EFI_ID = "{c12a7328-f81f-11d2-ba4b-00a0c93ec93b}"
@@ -95,43 +93,38 @@ function CompressPartition {
     Write-Host "即將建立新分區" -NoNewline
     Write-Host " ($dstDriveLetter`:\) " -NoNewline -ForegroundColor:Yellow
     Write-Host "$(__FormateByte__ $Size)"
-
-    if ($EFI) {
-        if (($Dri|Get-Disk).PartitionStyle -ne "GPT") {
-            Write-Host "錯誤::該分區的磁碟格式非 GPT 格式"; return
+    if ($Boot) {
+        $BootType = ($Dri|Get-Disk).PartitionStyle
+        if ($BootType -eq "GPT") {
+            $BootDri = Get-Partition($Dri.DiskNumber)|Where-Object{$_.GptType -eq $EFI_ID}
+            if ($BootDri) {
+                Write-Host "停止建立::開機引導已經存在"; return
+            }
+            $BootDri = (($Dri|New-Partition -Size:($Size) -GptType:$EFI_ID)|Format-Volume -FileSystem:FAT32 -Force)|Get-Partition
+            $BootDri|Set-Partition -NewDriveLetter:$dstDriveLetter
+            Write-Host "已經建立開機磁區 $($BootDri.DriveLetter)"
+            $cmd = "bcdboot $($srcDriveLetter):\windows /f UEFI /s $($dstDriveLetter):\ /l zh-tw"
+        } elseif ($BootType -eq "MBR") {
+            $BootDri = $Dri|Get-Disk|Get-Partition|Where-Object{$_.IsActive}
+            if ($BootDri -and ($BootDri.DriveLetter -ne $srcDriveLetter)) {
+                Write-Host "停止建立::開機引導已經存在"; return
+            }
+            $BootDri = (($Dri|New-Partition -Size:($Size))|Format-Volume -FileSystem:NTFS -Force)|Get-Partition
+            $BootDri|Set-Partition -NewDriveLetter:$dstDriveLetter
+            $BootDri|Set-Partition -IsActive $True
+            Write-Host "已經建立開機磁區 $($BootDri.DriveLetter)"
+            $cmd = "bcdboot $($srcDriveLetter):\windows /f BIOS /s $dstDriveLetter`:\ /l zh-tw"
+            Write-Host $cmd
+            Invoke-Expression $cmd
         }
-
-        $Boot = Get-Partition($Dri.DiskNumber)|Where-Object{$_.GptType -eq $EFI_ID}
-        if ($Boot) { Write-Host "停止建立::開機引導已經存在"; return }
-
-        $Boot = (($Dri|New-Partition -Size:($Size) -GptType:$EFI_ID)|Format-Volume -FileSystem:FAT32 -Force)|Get-Partition
-        $Boot|Set-Partition -NewDriveLetter:$dstDriveLetter
-        Write-Host "已經建立開機磁區 $($Boot.DriveLetter)"
-        $cmd = "bcdboot $($srcDriveLetter):\windows /f UEFI /s $($dstDriveLetter):\ /l zh-tw"
-    } elseif ($MBR) {
-        if (($Dri|Get-Disk).PartitionStyle -ne "MBR") {
-            Write-Host "錯誤::該分區的磁碟格式非 MBR 格式"; return
-        }
-        $Boot = $Dri|Get-Disk|Get-Partition|Where-Object{$_.IsActive}
-        if ($Boot -and ($Boot.DriveLetter -ne $srcDriveLetter)) {
-            Write-Host "停止建立::開機引導已經存在"; return
-        }
-
-        $Boot = (($Dri|New-Partition -Size:($Size))|Format-Volume -FileSystem:NTFS -Force)|Get-Partition
-        $Boot|Set-Partition -NewDriveLetter:$dstDriveLetter
-        $Boot|Set-Partition -IsActive $True
-        Write-Host "已經建立開機磁區 $($Boot.DriveLetter)"
-        $cmd = "bcdboot $($srcDriveLetter):\windows /f BIOS /s $dstDriveLetter`:\ /l zh-tw"
-        Write-Host $cmd
-        Invoke-Expression $cmd
     }
     else {
         ((($Dri|New-Partition -Size:$Size)|Format-Volume -FileSystem:$FileSystem -Force)|Get-Partition)|Set-Partition -NewDriveLetter:$dstDriveLetter
     }
 }
 # CompressPartition G W 300MB -Force
-# CompressPartition G X 300MB -EFI -Force
-# CompressPartition G X 300MB -EFI -Force
+# CompressPartition G X 300MB -Boot -Force
+# CompressPartition C X 300MB -Boot -Force
 
 # 合併磁碟後方的空餘空間
 function MergePartition {
