@@ -19,11 +19,11 @@ irm bit.ly/33SZpuu|iex; InstallWin "D:\install.wim" W
 ```bash
 # 從 ISO 檔案安裝
 $IsoFile = "D:\DATA\ISO_Files\Win11_Chinese(Traditional)_x64v1.iso"
-irm bit.ly/33SZpuu|iex; InstallWin -File:$IsoFile -Index:1 -DriveLetter:W
+irm bit.ly/33SZpuu|iex; InstallWin -Path:$IsoFile -Index:1 -DriveLetter:W
 
 # 從 Wim 檔案安裝
 $WimFile = "D:\DATA\ISO_Files\install.wim"
-irm bit.ly/33SZpuu|iex; InstallWin -File:$WimFile -Index:1 -DriveLetter:W
+irm bit.ly/33SZpuu|iex; InstallWin -Path:$WimFile -Index:1 -DriveLetter:W
 
 # 修復引導(不小心打錯中斷了的話)
 irm bit.ly/340Pi6W|iex; autoFixBoot W
