@@ -258,7 +258,7 @@ function InstallWin {
     
     # 修復引導
     Invoke-RestMethod "https://raw.githubusercontent.com/hunandy14/autoFixEFI/master/autoFixBoot.ps1" | Invoke-Expression
-    autoFixBoot -DriveLetter:$DriveLetter -Force
+    autoFixBoot -DriveLetter:$DriveLetter -Force:$Force
 } 
 # InstallWin "D:\DATA\ISO_Files\Win11_Chinese(Traditional)_x64v1.iso" -Dri:E -Compact
 # InstallWin "D:\DATA\ISO_Files\install.wim" -Dri:E -Compact
