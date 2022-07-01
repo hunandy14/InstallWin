@@ -190,7 +190,7 @@ function Get-WIM_INFO {
         [Parameter(Position = 0, ParameterSetName = "", Mandatory)]
         [string] $Path,
         [Parameter(Position = 1, ParameterSetName = "")]
-        [uint] $Index = 0
+        [uint16] $Index = 0
     )
     # 獲取Wim檔案
     $img = __GetWIM_Path__($Path)
