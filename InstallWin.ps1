@@ -272,7 +272,7 @@ function WimIgnore {
         [string] $Out
     )
     if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
-    $ignore = Invoke-RestMethod "raw.githubusercontent.com/hunandy14/WimIgnore/master/WimScript.ini"
+    $ignore = Invoke-RestMethod "raw.githubusercontent.com/hunandy14/InstallWin/master/WimScript.ini"
     $onedrive = (Get-ChildItem "$($DriveLetter):\Users" -Dir | ForEach-Object {
         Get-ChildItem $_.FullName -Dir -Filter:"Onedrive*"
     })
