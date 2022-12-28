@@ -227,8 +227,10 @@ function InstallWin {
     
     # 獲取Wim檔案
     $img = __GetWIM_Path__($Path)
-    $wim   = $img.Path
-    $Mount = $img.DiskImage
+    if ($img) {
+        $wim   = $img.Path
+        $Mount = $img.DiskImage
+    } else { return } # 有空這裡補一下錯誤訊息
     
     # 安裝到指定曹位
     if ($Dri) {
