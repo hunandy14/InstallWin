@@ -306,6 +306,8 @@ function CaptureWim {
     WimIgnore $DriveLetter -Out:$WimScript
     $cmd = "Dism /Capture-Image /ImageFile:$ImageFile /CaptureDir:$CaptureDir /Name:$Name /ConfigFile:$WimScript"
     if ($Compress) { $cmd = "$cmd /Compress:max" }
+    Write-Host $cmd -ForegroundColor DarkGray
+    Write-Host "開始擷取 $($DriveLetter):\ 曹的系統映像檔到檔案 '$ImageFile' 中..."
     Invoke-Expression $cmd
 }
 
